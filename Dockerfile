@@ -19,7 +19,7 @@ WORKDIR /workspace
 # Build arguments for component path and version info
 ARG CMD_PATH=cmd/scheduler
 ARG VERSION=dev
-ARG COMMIT=ziwon
+ARG COMMIT=unknown
 ARG BUILD_DATE=unknown
 
 # Copy go mod files first for better caching
