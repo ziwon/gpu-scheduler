@@ -19,7 +19,35 @@ This installs the custom resource definitions:
 - `GpuClaim`
 - `GpuNodeStatus`
 
-### Step 2: Install with Helm
+### Step 2: Setup Webhook TLS Certificates
+
+The admission webhook **requires TLS certificates** to function. Kubernetes mandates HTTPS for admission webhooks.
+
+**Quick Setup (Self-Signed):**
+```bash
+NAMESPACE=default
+
+# Download and run certificate generation script
+curl -sL https://raw.githubusercontent.com/ziwon/gpu-scheduler/main/hack/gen-webhook-certs.sh | bash -s -- ${NAMESPACE}
+
+# Or manually - see detailed guide
+```
+
+**Production Setup (cert-manager):**
+```bash
+# Install cert-manager first, then create Certificate resource
+# See detailed guide below
+```
+
+📖 **For detailed certificate setup instructions, see [Webhook Certificates Guide](webhook-certificates.md)**
+
+The guide covers:
+- Why certificates are required (port 443, HTTPS mandatory)
+- Complete certificate generation scripts
+- cert-manager setup for production
+- Troubleshooting common certificate issues
+
+### Step 3: Install with Helm
 
 ```bash
 helm install gpu-scheduler charts/gpu-scheduler
@@ -29,10 +57,14 @@ Or with custom namespace:
 
 ```bash
 export NAMESPACE=gpu-system
+
+# Don't forget to create certificates in the custom namespace!
+# Repeat Step 2 with NAMESPACE=gpu-system
+
 ./hack/dev.sh
 ```
 
-### Step 3: Verify Installation
+### Step 4: Verify Installation
 
 Check that all components are running:
 
@@ -241,6 +273,38 @@ Common reasons:
 - No nodes with enough free GPUs
 - Node selector doesn't match any nodes
 - GPU leases stuck (manual cleanup needed)
+
+### Webhook errors: "no endpoints available"
+
+**Error message:**
+```
+Internal error occurred: failed calling webhook "pods.gpu-scheduler.svc":
+failed to call webhook: Post "https://gpu-scheduler-webhook.default.svc:443/mutate?timeout=10s":
+no endpoints available for service "gpu-scheduler-webhook"
+```
+
+This usually means **TLS certificates are missing** or the webhook pod isn't running.
+
+**Quick diagnosis:**
+```bash
+# Check webhook pod
+kubectl get pods -l app=gpu-scheduler-webhook
+
+# Check certificate secret
+kubectl get secret gpu-scheduler-webhook-cert
+
+# Check logs
+kubectl logs -l app=gpu-scheduler-webhook
+```
+
+**Fix:** If the certificate secret is missing, generate certificates following [Step 2](#step-2-setup-webhook-tls-certificates).
+
+📖 **For detailed troubleshooting, see [Webhook Certificates Guide - Troubleshooting](webhook-certificates.md#troubleshooting)**
+
+**Key points:**
+- Port 443 is mandatory (Kubernetes requirement)
+- HTTPS/TLS is required (not optional)
+- API server calls the webhook (not the agent)
 
 ### GPU not visible in container
 

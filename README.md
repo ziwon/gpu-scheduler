@@ -62,6 +62,8 @@ kubectl logs gpu-test
 
 - **[Architecture](docs/architecture.md)** - How the system works under the hood
 - **[Usage Guide](docs/usage.md)** - Installation, examples, and troubleshooting
+- **[Webhook Certificates](docs/webhook-certificates.md)** - TLS certificate setup for admission webhook
+- **[RBAC Configuration](docs/rbac.md)** - ServiceAccount and permissions setup
 - **[Development Guide](docs/development.md)** - Building, testing, and contributing
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 

@@ -279,7 +279,7 @@ coverage.*
 
 ```dockerfile
 # Good: Specific version
-FROM golang:1.22-alpine3.19
+FROM golang:1.24-alpine3.21
 
 # Bad: Latest (unpredictable)
 FROM golang:latest
