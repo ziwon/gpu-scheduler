@@ -1,0 +1,49 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CLAUDE.md
+docs/
+
+# Kubernetes manifests
+charts/
+hack/
+
+# CI/CD
+.github/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local development
+.cache/
+.config/
+.local/
+.env
+.env.local
+
+# Test files
+*_test.go
+
+# Build output (except the binary we're building)
+bin/
+dist/
+build/
+_output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log

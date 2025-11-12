@@ -1,0 +1,159 @@
+# GPU Scheduler
+
+Topology-aware, gang-friendly GPU scheduler for Kubernetes with atomic device leasing, claim-based APIs, and automatic environment injection.
+
+## Features
+
+- **Smart GPU Allocation**: Atomic device locking prevents double-booking
+- **Topology Awareness**: Prefers GPUs with fast interconnects (NVLink)
+- **Declarative API**: Define GPU needs with `GpuClaim` resources
+- **Automatic Setup**: Webhook injects `CUDA_VISIBLE_DEVICES` automatically
+- **Gang Scheduling**: Multi-pod coordination (planned)
+
+## Quick Start
+
+```bash
+# 1. Install
+kubectl apply -f charts/gpu-scheduler/templates/crds.yaml
+helm install gpu-scheduler charts/gpu-scheduler
+
+# 2. Create a GPU claim
+kubectl apply -f - <<EOF
+apiVersion: gpu.scheduling/v1
+kind: GpuClaim
+metadata:
+  name: my-gpu
+spec:
+  devices:
+    count: 1
+    exclusivity: Exclusive
+EOF
+
+# 3. Run a pod
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-test
+  annotations:
+    gpu.scheduling/claim: my-gpu
+spec:
+  schedulerName: gpu-scheduler
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: nvidia/cuda:12.4.1-runtime-ubuntu22.04
+      command: ["nvidia-smi"]
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+EOF
+
+# 4. Check results
+kubectl logs gpu-test
+```
+
+## Documentation
+
+- **[Architecture](docs/architecture.md)** - How the system works under the hood
+- **[Usage Guide](docs/usage.md)** - Installation, examples, and troubleshooting
+- **[Development Guide](docs/development.md)** - Building, testing, and contributing
+- **[API Reference](docs/api-reference.md)** - Complete API documentation
+
+## How It Works
+
+The system has three components working together:
+
+```
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│  Scheduler  │      │   Webhook   │      │    Agent    │
+│   (Plugin)  │      │  (Mutator)  │      │ (DaemonSet) │
+└──────┬──────┘      └──────┬──────┘      └──────┬──────┘
+       │                    │                    │
+       └────────────────────┴────────────────────┘
+                           │
+                  Kubernetes API Server
+```
+
+1. **Scheduler**: Allocates GPUs using atomic lease-based locking
+2. **Webhook**: Injects `CUDA_VISIBLE_DEVICES` environment variable
+3. **Agent**: Reports GPU inventory and topology from each node
+
+**Key Innovation**: Uses Kubernetes Coordination Leases for atomic GPU allocation - preventing race conditions and double-booking.
+
+See [Architecture](docs/architecture.md) for detailed explanation.
+
+## Building
+
+```bash
+# Build scheduler
+make docker
+
+# Build webhook
+make docker-webhook
+
+# Build agent
+make docker-agent
+```
+
+See [Development Guide](docs/development.md) for local development setup.
+
+## Examples
+
+### Single GPU
+
+```yaml
+apiVersion: gpu.scheduling/v1
+kind: GpuClaim
+metadata:
+  name: single-gpu
+spec:
+  devices:
+    count: 1
+    exclusivity: Exclusive
+```
+
+### Multi-GPU with Topology
+
+```yaml
+apiVersion: gpu.scheduling/v1
+kind: GpuClaim
+metadata:
+  name: training-gpus
+spec:
+  devices:
+    count: 4
+    policy: contiguous
+    exclusivity: Exclusive
+  topology:
+    mode: Preferred
+    minBandwidthGBps: 600
+```
+
+More examples in [Usage Guide](docs/usage.md).
+
+## Current Status (MVP)
+
+**Implemented**:
+- ✅ GpuClaim and GpuNodeStatus CRDs
+- ✅ Scheduler plugin with lease-based allocation
+- ✅ Webhook for CUDA_VISIBLE_DEVICES injection
+- ✅ Agent skeleton (reports placeholder data)
+- ✅ Helm chart for deployment
+
+**TODO**:
+- ⏳ NVML integration in agent
+- ⏳ Topology scoring in scheduler
+- ⏳ Node selector enforcement
+- ⏳ Gang scheduling support
+- ⏳ Automatic lease cleanup
+- ⏳ Fabric-aware scheduling (NVLink, InfiniBand/GPUDirect, cuFile). See [docs/todo.md](docs/todo.md) for the evolving plan.
+
+## Contributing
+
+See [Development Guide](docs/development.md).
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

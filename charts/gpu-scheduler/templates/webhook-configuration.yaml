@@ -1,0 +1,20 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: gpu-scheduler-webhook
+webhooks:
+  - name: pods.gpu-scheduler.svc
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: Fail
+    clientConfig:
+      service:
+        name: gpu-scheduler-webhook
+        namespace: {{ .Values.namespace }}
+        path: /mutate
+      caBundle: {{ .Values.webhook.caBundle | default "" | quote }}
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]

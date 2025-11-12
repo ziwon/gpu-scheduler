@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-scheduler-webhook
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpu-scheduler-webhook
+  template:
+    metadata:
+      labels:
+        app: gpu-scheduler-webhook
+    spec:
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      containers:
+        - name: webhook
+          image: "{{ .Values.webhook.image.repository }}:{{ .Values.webhook.image.tag }}"
+          imagePullPolicy: {{ .Values.webhook.image.pullPolicy }}
+          args:
+            - "--tls-cert-file=/certs/tls.crt"
+            - "--tls-private-key-file=/certs/tls.key"
+          ports:
+            - containerPort: 8443
+              name: https
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /certs
+              readOnly: true
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: gpu-scheduler-webhook-cert

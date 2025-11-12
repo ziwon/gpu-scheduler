@@ -1,0 +1,20 @@
+image:
+  repository: ghcr.io/aaronlab/gpu-scheduler
+  tag: dev
+  pullPolicy: IfNotPresent
+
+webhook:
+  image:
+    repository: ghcr.io/aaronlab/gpu-scheduler-webhook
+    tag: dev
+    pullPolicy: IfNotPresent
+  caBundle: ""
+
+agent:
+  image:
+    repository: ghcr.io/aaronlab/gpu-scheduler-agent
+    tag: dev
+    pullPolicy: IfNotPresent
+
+serviceAccountName: gpu-scheduler
+namespace: default

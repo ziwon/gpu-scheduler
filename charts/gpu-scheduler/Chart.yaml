@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gpu-scheduler
+description: Topology-aware GPU scheduler with claim-driven leases and admission webhook.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
