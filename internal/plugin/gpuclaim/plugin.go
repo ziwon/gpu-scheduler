@@ -100,17 +100,39 @@ func New(_ context.Context, _ runtime.Object, handle framework.Handle) (framewor
 }
 
 // PreFilter reads annotations and seeds scheduler state.
-func (p *Plugin) PreFilter(ctx context.Context, cycleState *framework.CycleState, pod *corev1.Pod) (*framework.PreFilterResult, *framework.Status) {
-	claimName := pod.GetAnnotations()[util.AnnoClaim]
-	if claimName == "" {
-		return nil, framework.NewStatus(framework.Unschedulable, "gpu claim annotation missing")
-	}
-	state := &stateData{
-		claimName: claimName,
-		reqCount:  defaultGPUCount,
-	}
-	cycleState.Write(Name, state)
-	return nil, nil
+func (p *Plugin) PreFilter(
+    ctx context.Context,
+    cycleState *framework.CycleState,
+    pod *corev1.Pod,
+) (*framework.PreFilterResult, *framework.Status) {
+    claimName := pod.GetAnnotations()[util.AnnoClaim]
+    if claimName == "" {
+        return nil, framework.NewStatus(framework.Unschedulable, "gpu claim annotation missing")
+    }
+
+	// Fetch the GpuClaim referenced by the pod.
+    claim := &apiv1.GpuClaim{}
+    if err := p.crClient.Get(ctx, types.NamespacedName{
+        Namespace: pod.Namespace,
+        Name:      claimName,
+    }, claim); err != nil {
+		// Returning Error here would affect the entire scheduler; for now, return Unschedulable
+        msg := fmt.Sprintf("failed to get GpuClaim %q: %v", claimName, err)
+        return nil, framework.NewStatus(framework.Unschedulable, msg)
+    }
+
+	// Use devices.count, default to defaultGPUCount if not specified
+    reqCount := claim.Spec.Devices.Count
+    if reqCount <= 0 {
+        reqCount = defaultGPUCount
+    }
+
+    state := &stateData{
+        claimName: claimName,
+        reqCount:  reqCount,
+    }
+    cycleState.Write(Name, state)
+    return nil, nil
 }
 
 func (p *Plugin) PreFilterExtensions() framework.PreFilterExtensions { return nil }
