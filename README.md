@@ -2,7 +2,7 @@
 
 Topology-aware, gang-friendly GPU scheduler for Kubernetes with atomic device leasing, claim-based APIs, and automatic environment injection.
 
-<img src="docs/screen.png">
+<img src="docs/mig-mps-cluster.png">
 
 
 ## Features
