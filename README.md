@@ -25,7 +25,7 @@ kubectl apply -f - <<EOF
 apiVersion: gpu.scheduling/v1
 kind: GpuClaim
 metadata:
-  name: my-gpu
+  name: single-gpu
 spec:
   devices:
     count: 1
@@ -33,7 +33,7 @@ spec:
 EOF
 
 # 3. Run a pod
-kubectl apply -f - <<EOF
+kubectl apply -f - <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -54,7 +54,20 @@ spec:
 EOF
 
 # 4. Check results
-kubectl logs gpu-test
+kubectl get gclaim -n gpu-scheduler
+NAME         AGE
+single-gpu   26m
+
+
+kubectl get gns -n gpu-scheduler -o wide
+NAME        AGE
+aaron-lgt   20m
+
+k logs gpu-test -n gpu-scheduler
+CVD=0
+GPU 0: NVIDIA GeForce RTX 5080 (UUID: GPU-7fb26e77-c956-a86e-2e85-a51d8abbb7c5)
+index, name, memory.total [MiB]
+0, NVIDIA GeForce RTX 5080, 16303 MiB
 ```
 
 ## Compatibility Targets
