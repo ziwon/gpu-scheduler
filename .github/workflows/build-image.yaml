@@ -10,7 +10,7 @@ on:
         required: false
         default: 'all'
         type: choice
-        options: [all, scheduler, lease-manager]
+        options: [all, scheduler, webhook, agent]
 
 env:
   REGISTRY: harbor.home.lab
@@ -27,7 +27,7 @@ jobs:
         run: |
           COMPONENT="${{ github.event.inputs.component }}"
           if [ -z "$COMPONENT" ] || [ "$COMPONENT" == "all" ]; then
-            echo 'matrix=["scheduler","lease-manager"]' >> $GITHUB_OUTPUT
+            echo 'matrix=["scheduler","webhook","agent"]' >> $GITHUB_OUTPUT
           else
             echo "matrix=[\"$COMPONENT\"]" >> $GITHUB_OUTPUT
           fi
@@ -88,6 +88,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
+            GO_VERSION=1.24
             CMD_PATH=cmd/${{ matrix.component }}
             VERSION=${{ steps.meta.outputs.version }}
             COMMIT=${{ steps.meta.outputs.commit }}
